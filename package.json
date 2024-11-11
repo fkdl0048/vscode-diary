@@ -3,6 +3,10 @@
   "displayName": "Daily Diary",
   "description": "Simple diary management extension",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fkdl0048/vscode-diary"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
