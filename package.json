@@ -14,7 +14,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:vscode-diary.createDiary"
+    "onCommand:vscode-diary.createDiary",
+    "onCommand:vscode-diary.commitAndPush"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -22,6 +23,10 @@
       {
         "command": "vscode-diary.createDiary",
         "title": "Create Today's Diary"
+      },
+      {
+        "command": "vscode-diary.commitAndPush",
+        "title": "Commit and Push Diary"
       }
     ],
     "keybindings": [
@@ -29,6 +34,11 @@
         "command": "vscode-diary.createDiary",
         "key": "ctrl+alt+d",
         "mac": "cmd+alt+d"
+      },
+      {
+        "command": "vscode-diary.commitAndPush",
+        "key": "ctrl+alt+g",
+        "mac": "cmd+alt+g"
       }
     ],
     "configuration": {
@@ -38,6 +48,11 @@
           "type": "string",
           "default": "",
           "description": "Base path for diary files"
+        },
+        "diary.autoCommit": {
+          "type": "boolean",
+          "default": false,
+          "description": "자동으로 일기를 Git에 커밋하고 푸시합니다"
         }
       }
     }

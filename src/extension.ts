@@ -1,11 +1,15 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Diary extension is now active!');
 
-    let disposable = vscode.commands.registerCommand('vscode-diary.createDiary', async () => {
+    let createDiaryCommand = vscode.commands.registerCommand('vscode-diary.createDiary', async () => {
         try {
             // 설정에서 기본 경로 가져오기
             const config = vscode.workspace.getConfiguration('diary');
@@ -84,6 +88,8 @@ export function activate(context: vscode.ExtensionContext) {
 - 
 
 ## 생각 정리
+
+## 오늘의 한 줄
 `;
 
             // 파일 생성 및 저장
@@ -99,7 +105,66 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    context.subscriptions.push(disposable);
+    // Git 커밋 및 푸시 명령어 등록
+    let gitCommitCommand = vscode.commands.registerCommand('vscode-diary.commitAndPush', async () => {
+        try {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                throw new Error('열린 에디터가 없습니다.');
+            }
+
+            const filePath = editor.document.fileName;
+            if (!filePath.endsWith('.md')) {
+                throw new Error('마크다운 파일만 커밋할 수 있습니다.');
+            }
+
+            // 저장되지 않은 변경사항 저장
+            await editor.document.save();
+
+            // Git 작업 디렉토리 찾기
+            const diaryDir = path.dirname(filePath);
+            
+            // Git 상태 확인
+            const { stdout: status } = await execAsync('git status --porcelain', { cwd: diaryDir });
+            if (!status) {
+                vscode.window.showInformation('커밋할 변경사항이 없습니다.');
+                return;
+            }
+
+            // 현재 날짜 가져오기
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+
+            // Git add
+            await execAsync('git add .', { cwd: diaryDir });
+
+            // Git commit
+            const commitMsg = `Diary: ${dateStr}`;
+            await execAsync(`git commit -m "${commitMsg}"`, { cwd: diaryDir });
+
+            // Git push
+            await execAsync('git push', { cwd: diaryDir });
+
+            vscode.window.showInformation('일기가 성공적으로 GitHub에 업로드되었습니다! 🎉');
+
+        } catch (error) {
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage('Git 작업 중 오류 발생: ' + error.message);
+            }
+        }
+    });
+
+    // 파일 저장 시 자동 커밋 기능
+    let autoCommit = vscode.workspace.onDidSaveTextDocument(async (document) => {
+        const config = vscode.workspace.getConfiguration('diary');
+        const autoCommitEnabled = config.get<boolean>('autoCommit', false);
+        
+        if (autoCommitEnabled && document.fileName.endsWith('.md')) {
+            await vscode.commands.executeCommand('vscode-diary.commitAndPush');
+        }
+    });
+
+    context.subscriptions.push(createDiaryCommand, gitCommitCommand, autoCommit);
 }
 
 export function deactivate() {}
