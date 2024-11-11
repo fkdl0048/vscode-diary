@@ -127,7 +127,7 @@ export function activate(context: vscode.ExtensionContext) {
             // Git 상태 확인
             const { stdout: status } = await execAsync('git status --porcelain', { cwd: diaryDir });
             if (!status) {
-                vscode.window.showInformation('커밋할 변경사항이 없습니다.');
+                vscode.window.showInformationMessage('커밋할 변경사항이 없습니다.');
                 return;
             }
 
@@ -145,7 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
             // Git push
             await execAsync('git push', { cwd: diaryDir });
 
-            vscode.window.showInformation('일기가 성공적으로 GitHub에 업로드되었습니다! 🎉');
+            vscode.window.showInformationMessage('일기가 성공적으로 GitHub에 업로드되었습니다! 🎉');
 
         } catch (error) {
             if (error instanceof Error) {
